@@ -47,10 +47,18 @@ if 'model' not in st.session_state:
 
 def load_model_function():
     try:
-        st.session_state.model = load_model('simple_rnn_imdb.h5')
+        # Add custom_objects with legacy compatibility
+        st.session_state.model = load_model('simple_rnn_imdb.h5', compile=False)
         st.success("Model loaded successfully!")
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        try:
+            # If first attempt fails, try with legacy mode
+            tf.keras.utils.disable_interactive_logging()
+            with tf.keras.utils.custom_object_scope({'SimpleRNN': tf.keras.layers.SimpleRNN}):
+                st.session_state.model = load_model('simple_rnn_imdb.h5', compile=False)
+            st.success("Model loaded successfully in legacy mode!")
+        except Exception as e2:
+            st.error(f"Error loading model: {e2}")
 
 # Add a button to load the model
 st.button("Load Model", on_click=load_model_function)
