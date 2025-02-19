@@ -1,7 +1,7 @@
 import streamlit as st
 import tensorflow as tf
-from keras.models import load_model
-import h5py
+from tensorflow import keras
+import json
 
 # Initialize session state to store the model
 if 'model' not in st.session_state:
@@ -9,34 +9,25 @@ if 'model' not in st.session_state:
 
 def load_model_function():
     try:
-        # Set legacy mode for SimpleRNN
-        config = tf.compat.v1.ConfigProto()
-        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
+        # Define the model architecture manually
+        model = keras.Sequential([
+            keras.layers.Embedding(10000, 32),
+            keras.layers.SimpleRNN(32),
+            keras.layers.Dense(1, activation='sigmoid')
+        ])
         
-        # Custom load function to remove problematic parameters
-        with h5py.File('simple_rnn_imdb.h5', 'r') as f:
-            model_config = f.attrs.get('model_config')
-            if model_config is not None:
-                model_config = model_config.decode('utf-8')
-                import json
-                config_dict = json.loads(model_config)
-                
-                # Remove time_major parameter from SimpleRNN layers
-                for layer in config_dict['config']['layers']:
-                    if 'time_major' in layer['config']:
-                        del layer['config']['time_major']
-                
-                # Recreate model from modified config
-                model = tf.keras.models.model_from_json(json.dumps(config_dict))
-                
-                # Load weights
-                model.load_weights('simple_rnn_imdb.h5')
-                st.session_state.model = model
-                st.success("Model loaded successfully!")
+        # Load weights only
+        model.load_weights('simple_rnn_imdb.h5')
+        
+        # Store in session state
+        st.session_state.model = model
+        st.success("Model loaded successfully!")
+        
     except Exception as e:
         st.error(f"Error loading model: {e}")
+        st.error("Please make sure the model file exists in the correct location")
 
-# Rest of your code remains the same
+# Add a button to load the model
 st.button("Load Model", on_click=load_model_function)
 
 # When making predictions, check if model is loaded
