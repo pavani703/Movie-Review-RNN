@@ -14,8 +14,10 @@ reverse_word_index = {value: key for key, value in word_index.items()}
 # Load the pre-trained model with ReLU activation
 if os.path.exists('simple_rnn_imdb.h5'):
     print("Model file exists")
-    model = load_model('simple_rnn_imdb.h5', 
-                      custom_objects={'custom_layer': CustomLayer})
+    try:
+        model = load_model('simple_rnn_imdb.h5')
+    except Exception as e:
+        print(f"Error loading model: {e}")
 else:
     print("Model file not found")
 
