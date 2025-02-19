@@ -18,6 +18,7 @@ if os.path.exists('simple_rnn_imdb.h5'):
         model = load_model('simple_rnn_imdb.h5')
     except Exception as e:
         print(f"Error loading model: {e}")
+        model = None
 else:
     print("Model file not found")
 
@@ -48,12 +49,20 @@ if st.button('Classify'):
     preprocessed_input=preprocess_text(user_input)
 
     ## MAke prediction
-    prediction=model.predict(preprocessed_input)
-    sentiment='Positive' if prediction[0][0] > 0.5 else 'Negative'
+    if model is not None:
+        try:
+            prediction = model.predict(preprocessed_input)
+            sentiment='Positive' if prediction[0][0] > 0.5 else 'Negative'
+        except Exception as e:
+            print(f"Prediction error: {e}")
+            sentiment = 'Error'
+    else:
+        print("Model was not properly loaded")
+        sentiment = 'Error'
 
     # Display the result
     st.write(f'Sentiment: {sentiment}')
-    st.write(f'Prediction Score: {prediction[0][0]}')
+    st.write(f'Prediction Score: {prediction[0][0] if model is not None else "Model not loaded"}')
 else:
     st.write('Please enter a movie review.')
 
